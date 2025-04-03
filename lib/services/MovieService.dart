@@ -8,7 +8,7 @@ class MovieService {
 
   static Future<List<Movie>> fetchMovies(String query) async {
     final response = await http.get(
-      Uri.parse("$_baseUrl/search/movie?query=$query"),
+      Uri.parse("$_baseUrl/search/movie?language=fr-FR&query=$query"),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

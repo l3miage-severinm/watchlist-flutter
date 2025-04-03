@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/Movie.dart';
 import '../services/MovieService.dart';
+import '../services/AuthService.dart';
 import '../widgets/MovieTile.dart';
 import '../widgets/CustomSearchBar.dart';
 
@@ -14,6 +15,29 @@ class MovieListScreen extends StatefulWidget {
 class _MovieListScreenState extends State<MovieListScreen> {
   List<Movie> movies = [];
   bool isLoading = false;
+  bool isAuthenticated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    checkAuthStatus();
+  }
+
+  Future<void> checkAuthStatus() async {
+    final authStatus = await AuthService.isAuthenticated();
+    setState(() {
+      isAuthenticated = authStatus;
+    });
+  }
+
+  Future<void> handleAuth() async {
+    if (isAuthenticated) {
+      await AuthService.logout();
+    } else {
+      await AuthService.authenticate();
+    }
+    await checkAuthStatus();
+  }
 
   void searchMovies(String query) async {
     setState(() => isLoading = true);
@@ -33,10 +57,18 @@ class _MovieListScreenState extends State<MovieListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Rechercher un film")),
+      appBar: AppBar(
+        title: const Text("Rechercher un film"),
+        actions: [
+          TextButton(
+              onPressed: handleAuth, 
+              child: Text(isAuthenticated ? "Se déconnecter" : "Se connecter")
+          ),
+        ],
+      ),
       body: Column(
         children: [
-          CustomSearchBar(onSearch: searchMovies), // Utilisation de la SearchBar
+          CustomSearchBar(onSearch: searchMovies),
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())

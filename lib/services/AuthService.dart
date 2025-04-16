@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -36,20 +37,25 @@ class AuthService {
         throw "Impossible d'ouvrir l'URL d'authentification.";
       }
 
-      http.Response accessTokenResponse;
+      http.Response? accessTokenResponse;
       do {
-        sleep(Duration(seconds: 5));
-        accessTokenResponse = await http.post(
-          Uri.parse(_accessTokenUrl),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $_apiKey',
-          },
-          body: json.encode({'request_token': requestToken}),
-        );
-      } while (accessTokenResponse.statusCode != 200);
+        await Future.delayed(Duration(seconds: 5));
+        try {
+          accessTokenResponse = await http.post(
+            Uri.parse(_accessTokenUrl),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $_apiKey',
+            },
+            body: json.encode({'request_token': requestToken}),
+          );
+        }
+        catch(e) {
+          print(e);
+        }
+      } while (accessTokenResponse?.statusCode != 200);
 
-      localStorage.setItem('access_token', jsonDecode(accessTokenResponse.body)['access_token']);
+      localStorage.setItem('access_token', jsonDecode(accessTokenResponse!.body)['access_token']);
 
     } else {
       throw "Erreur lors de la demande du request token.";

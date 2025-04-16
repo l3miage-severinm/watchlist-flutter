@@ -16,6 +16,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
   List<Movie> movies = [];
   bool isLoading = false;
   bool isAuthenticated = false;
+  bool isAuthenticating = false;
 
   @override
   void initState() {
@@ -34,9 +35,15 @@ class _MovieListScreenState extends State<MovieListScreen> {
     if (isAuthenticated) {
       await AuthService.logout();
     } else {
+      setState(() {
+        isAuthenticating = true;
+      });
       await AuthService.authenticate();
     }
     await checkAuthStatus();
+    setState(() {
+      isAuthenticating = false;
+    });
   }
 
   void searchMovies(String query) async {
@@ -56,6 +63,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Rechercher un film"),
@@ -69,6 +77,8 @@ class _MovieListScreenState extends State<MovieListScreen> {
       body: Column(
         children: [
           CustomSearchBar(onSearch: searchMovies),
+          if(isAuthenticating)
+            Center(child: CircularProgressIndicator()),
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())

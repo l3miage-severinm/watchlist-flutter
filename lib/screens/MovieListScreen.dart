@@ -17,6 +17,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
   bool isLoading = false;
   bool isAuthenticated = false;
   bool isAuthenticating = false;
+  bool hasSearched = false;
 
   @override
   void initState() {
@@ -34,20 +35,24 @@ class _MovieListScreenState extends State<MovieListScreen> {
   Future<void> handleAuth() async {
     if (isAuthenticated) {
       await AuthService.logout();
+      await checkAuthStatus();
     } else {
       setState(() {
         isAuthenticating = true;
       });
       await AuthService.authenticate();
+      await checkAuthStatus();
+      setState(() {
+        isAuthenticating = false;
+      });
     }
-    await checkAuthStatus();
-    setState(() {
-      isAuthenticating = false;
-    });
   }
 
   void searchMovies(String query) async {
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      hasSearched = true;
+    });
 
     try {
       final results = await MovieService.fetchMovies(query);
@@ -56,43 +61,54 @@ class _MovieListScreenState extends State<MovieListScreen> {
         isLoading = false;
       });
     } catch (error) {
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+      });
       print("Erreur lors du chargement des films : $error");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Rechercher un film"),
         actions: [
           TextButton(
-              onPressed: handleAuth, 
-              child: Text(isAuthenticated ? "Se déconnecter" : "Se connecter")
+            onPressed: handleAuth,
+            child: Text(isAuthenticated ? "Se déconnecter" : "Se connecter"),
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          CustomSearchBar(onSearch: searchMovies),
-          if(isAuthenticating)
-            Center(child: CircularProgressIndicator()),
-          Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : movies.isEmpty
-                ? const Center(child: Text("Aucun film trouvé"))
-                : ListView.builder(
-              itemCount: movies.length,
-              itemBuilder: (context, index) {
-                return MovieTile(movie: movies[index]);
-              },
-            ),
+          Column(
+            children: [
+              CustomSearchBar(onSearch: searchMovies),
+              Expanded(
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : hasSearched
+                    ? movies.isEmpty
+                    ? const Center(child: Text("Aucun film trouvé"))
+                    : ListView.builder(
+                  itemCount: movies.length,
+                  itemBuilder: (context, index) {
+                    return MovieTile(movie: movies[index]);
+                  },
+                )
+                    : const SizedBox.shrink(), // Rien tant qu'aucune recherche
+              ),
+            ],
           ),
+          if (isAuthenticating)
+            Container(
+              color: Colors.black54,
+              child: const Center(child: CircularProgressIndicator()),
+            ),
         ],
       ),
     );
   }
 }
+

@@ -16,12 +16,11 @@ class MovieService {
       },
     );
 
-    if (response.statusCode == 200) {
-      final decodedJson = json.decode(response.body);
-      final List<dynamic> results = decodedJson['results'];
-      return results.map((json) => Movie.fromJson(json)).toList();
-    } else {
+    if (response.statusCode != 200)
       throw Exception('Échec du chargement des films');
-    }
+
+    final decodedJson = json.decode(response.body);
+    final List<dynamic> results = decodedJson['results'];
+    return results.map((json) => Movie.fromJson(json)).toList();
   }
 }

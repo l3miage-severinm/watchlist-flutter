@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/Movie.dart';
-import '../services/MovieService.dart';
-import '../services/AuthService.dart';
-import '../widgets/MovieTile.dart';
 import '../widgets/CustomSearchBar.dart';
+import '../widgets/MovieTile.dart';
+import '../viewmodels/MovieListViewModel.dart';
+import '../viewmodels/AuthViewModel.dart';
 
 class MovieListScreen extends StatefulWidget {
   const MovieListScreen({super.key});
@@ -13,70 +14,31 @@ class MovieListScreen extends StatefulWidget {
 }
 
 class _MovieListScreenState extends State<MovieListScreen> {
-  List<Movie> movies = [];
-  bool isLoading = false;
-  bool isAuthenticated = false;
-  bool isAuthenticating = false;
-  bool hasSearched = false;
+  final viewModel = MovieListViewModel();
 
   @override
-  void initState() {
-    super.initState();
-    checkAuthStatus();
-  }
-
-  Future<void> checkAuthStatus() async {
-    final authStatus = await AuthService.isAuthenticated();
-    setState(() {
-      isAuthenticated = authStatus;
-    });
-  }
-
-  Future<void> handleAuth() async {
-    if (isAuthenticated) {
-      await AuthService.logout();
-      await checkAuthStatus();
-    } else {
-      setState(() {
-        isAuthenticating = true;
-      });
-      await AuthService.authenticate();
-      await checkAuthStatus();
-      setState(() {
-        isAuthenticating = false;
-      });
-    }
-  }
-
-  void searchMovies(String query) async {
-    setState(() {
-      isLoading = true;
-      hasSearched = true;
-    });
-
-    try {
-      final results = await MovieService.fetchMovies(query);
-      setState(() {
-        movies = results;
-        isLoading = false;
-      });
-    } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      print("Erreur lors du chargement des films : $error");
-    }
+  void dispose() {
+    viewModel.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Rechercher un film"),
         actions: [
-          TextButton(
-            onPressed: handleAuth,
-            child: Text(isAuthenticated ? "Se déconnecter" : "Se connecter"),
+          StreamBuilder<bool>(
+            stream: authViewModel.isAuthenticatedStream,
+            builder: (context, snapshot) {
+              final auth = snapshot.data ?? false;
+              return TextButton(
+                onPressed: authViewModel.handleAuth,
+                child: Text(auth ? "Se déconnecter" : "Se connecter"),
+              );
+            },
           ),
         ],
       ),
@@ -84,31 +46,55 @@ class _MovieListScreenState extends State<MovieListScreen> {
         children: [
           Column(
             children: [
-              CustomSearchBar(onSearch: searchMovies),
+              CustomSearchBar(onSearch: viewModel.searchMovies),
               Expanded(
-                child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : hasSearched
-                    ? movies.isEmpty
-                    ? const Center(child: Text("Aucun film trouvé"))
-                    : ListView.builder(
-                  itemCount: movies.length,
-                  itemBuilder: (context, index) {
-                    return MovieTile(movie: movies[index]);
+                child: StreamBuilder<bool>(
+                  stream: viewModel.isLoading,
+                  builder: (context, snapshot) {
+                    if (snapshot.data == true) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    return StreamBuilder<bool>(
+                      stream: viewModel.hasSearched,
+                      builder: (context, hasSearchedSnapshot) {
+                        final hasSearched = hasSearchedSnapshot.data ?? false;
+                        if (!hasSearched) {
+                          return const SizedBox.shrink();
+                        }
+                        return StreamBuilder<List<Movie>>(
+                          stream: viewModel.movies,
+                          builder: (context, moviesSnapshot) {
+                            final movies = moviesSnapshot.data ?? [];
+                            if (movies.isEmpty) {
+                              return const Center(child: Text("Aucun film trouvé"));
+                            }
+                            return ListView.builder(
+                              itemCount: movies.length,
+                              itemBuilder: (context, index) => MovieTile(movie: movies[index]),
+                            );
+                          },
+                        );
+                      },
+                    );
                   },
-                )
-                    : const SizedBox.shrink(), // Rien tant qu'aucune recherche
+                ),
               ),
             ],
           ),
-          if (isAuthenticating)
-            Container(
-              color: Colors.black54,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
+          StreamBuilder<bool>(
+            stream: authViewModel.isAuthenticatingStream,
+            builder: (context, snapshot) {
+              if (snapshot.data == true) {
+                return Container(
+                  color: Colors.black54,
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ],
       ),
     );
   }
 }
-

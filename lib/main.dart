@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:localstorage/localstorage.dart';
+import 'package:provider/provider.dart';
+import 'viewmodels/AuthViewModel.dart';
 import 'screens/MovieListScreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initLocalStorage();
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider(create: (_) => AuthViewModel()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

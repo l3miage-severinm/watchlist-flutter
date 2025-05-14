@@ -18,7 +18,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
   void initState() {
     super.initState();
     _searchSubject
-        .debounceTime(const Duration(milliseconds: 300))
+        .debounceTime(const Duration(milliseconds: 200))
         .distinct()
         .listen((query) {
       widget.onSearch(query);

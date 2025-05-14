@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/Movie.dart';
 import '../services/AuthService.dart';
+import '../services/ListsService.dart';
 
 class MovieDetailsScreen extends StatefulWidget {
   final Movie movie;
@@ -13,7 +14,7 @@ class MovieDetailsScreen extends StatefulWidget {
 
 class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   bool isAuthenticated = false;
-  List<String> _userLists = ["Ma liste 1", "Ma liste 2", "Mes favoris"];
+  List<String> _userLists = [];
 
   @override
   void initState() {
@@ -26,6 +27,12 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     setState(() {
       isAuthenticated = authStatus;
     });
+    if (isAuthenticated) {
+      final userLists = await ListsService.getUserLists();
+      setState(() {
+        _userLists = userLists.map((list) => list.name).toList();
+      });
+    }
   }
 
   @override

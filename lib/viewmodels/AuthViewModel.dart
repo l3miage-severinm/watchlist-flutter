@@ -14,7 +14,7 @@ class AuthViewModel {
   }
 
   Future<void> checkAuthStatus() async {
-    _isAuthenticated.add(await AuthService.isAuthenticated());
+    _isAuthenticated.add(AuthService.isAuthenticated());
   }
 
   Future<void> handleAuth() async {

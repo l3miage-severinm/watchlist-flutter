@@ -9,12 +9,16 @@ class AuthService {
   static const String _accessTokenUrl = "https://api.themoviedb.org/4/auth/access_token";
   static const String _requestTokenUrl = "https://api.themoviedb.org/4/auth/request_token";
 
-  static Future<bool> isAuthenticated() async {
-    return localStorage.getItem('access_token') != null;
+  static String? getAccessToken() {
+    return localStorage.getItem('access_token');
   }
 
-  static Future<String?> getAccessToken() async {
-    return localStorage.getItem('access_token');
+  static String? getAccountId() {
+    return localStorage.getItem('account_id');
+  }
+
+  static bool isAuthenticated() {
+    return getAccessToken() != null;
   }
 
   static Future<void> authenticate() async {
@@ -55,6 +59,7 @@ class AuthService {
       } while (accessTokenResponse?.statusCode != 200);
 
       localStorage.setItem('access_token', jsonDecode(accessTokenResponse!.body)['access_token']);
+      localStorage.setItem('account_id', jsonDecode(accessTokenResponse.body)['account_id']);
 
     } else {
       throw "Erreur lors de la demande du request token.";

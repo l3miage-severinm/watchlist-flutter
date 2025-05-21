@@ -3,6 +3,7 @@ import 'package:localstorage/localstorage.dart';
 import 'package:provider/provider.dart';
 import 'viewmodels/AuthViewModel.dart';
 import 'screens/HomeScreen.dart';
+import 'navigation/routeObserver.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: const HomeScreen(),
+      navigatorObservers: [routeObserver],
     );
   }
 }

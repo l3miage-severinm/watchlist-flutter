@@ -28,8 +28,8 @@ class MovieService {
   }
 
   static Future<List<Movie>> fetchFavoriteMovies() async {
-    final accountId = AuthService.getAccountId();
 
+    final accountId = AuthService.getAccountId();
     final response = await http.get(
       Uri.parse("$_baseUrl/account/$accountId/favorite/movies?language=fr-FR"),
       headers: {
@@ -52,7 +52,6 @@ class MovieService {
   static Future<void> addMovieToFavorites(int movieId) async {
 
     final accountId = AuthService.getAccountId();
-
     final response = await http.post(
       Uri.parse("$_baseUrl/account/$accountId/favorite"),
       headers: {
@@ -70,6 +69,38 @@ class MovieService {
     if (response.statusCode != 201 && response.statusCode != 200) {
       throw Exception("Échec de l'ajout en favori (${response.statusCode})");
     }
+  }
 
+  static Future<void> removeMovieFromFavorites(int movieId) async {
+
+    final accountId = AuthService.getAccountId();
+    final response = await http.post(
+      Uri.parse("$_baseUrl/account/$accountId/favorite"),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $_token'
+      },
+      body: json.encode({
+        'media_type': 'movie',
+        'media_id': movieId,
+        'favorite': false
+      }),
+    );
+
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw Exception("Échec de la suppression des favoris (${response.statusCode})");
+    }
+  }
+
+  static Future<bool> isFavorite(int movieId) async {
+    final List<Movie> moviesList = await fetchFavoriteMovies();
+
+    for (Movie movie in moviesList) {
+      if (movie.id == movieId) {
+        return true;
+      }
+    }
+    return false;
   }
 }

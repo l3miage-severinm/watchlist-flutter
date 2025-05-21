@@ -18,6 +18,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   void initState() {
     super.initState();
     viewModel = MovieDetailsViewModel();
+    viewModel.loadFavoriteStatus(widget.movie.id);
   }
 
   @override
@@ -26,21 +27,23 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     super.dispose();
   }
 
-  void _handleAddToFavorites() async {
-    await viewModel.addToFavorites(widget.movie.id);
+  void _handleToggleFavorite() async {
+    await viewModel.toggleFavoriteStatus(widget.movie.id);
 
     final error = await viewModel.error.first;
-    final added = await viewModel.added.first;
+    final isFavorite = await viewModel.isFavorite.first;
 
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur : $error")),
-      );
-    } else if (added) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Ajouté aux favoris !")),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          error != null
+              ? "Erreur : $error"
+              : isFavorite
+              ? "Ajouté aux favoris !"
+              : "Retiré des favoris.",
+        ),
+      ),
+    );
   }
 
   @override
@@ -49,24 +52,34 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
       appBar: AppBar(
         title: Text(widget.movie.title),
         actions: [
-          StreamBuilder<bool>(
-            stream: viewModel.isAdding,
-            builder: (context, snapshot) {
-              final isLoading = snapshot.data ?? false;
-              return IconButton(
-                icon: isLoading
-                    ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : const Icon(Icons.favorite_border),
-                tooltip: "Ajouter aux favoris",
-                onPressed: isLoading ? null : _handleAddToFavorites,
-              );
-            },
-          ),
-        ],
+        StreamBuilder<bool>(
+          stream: viewModel.isAdding,
+          builder: (context, loadingSnapshot) {
+            final isLoading = loadingSnapshot.data ?? false;
+
+            return StreamBuilder<bool>(
+              stream: viewModel.isFavorite,
+              builder: (context, favSnapshot) {
+                final isFavorite = favSnapshot.data ?? false;
+
+                return IconButton(
+                  icon: isLoading
+                      ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                      : Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
+                  tooltip: isFavorite ? "Retirer des favoris" : "Ajouter aux favoris",
+                  onPressed: isLoading ? null : _handleToggleFavorite,
+
+                );
+              },
+            );
+          },
+        ),
+      ],
+
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

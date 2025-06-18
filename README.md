@@ -1,16 +1,39 @@
-# test_flutter
+# Watchlist
 
-A new Flutter project.
+## Généralités
 
-## Getting Started
+Application de recherche et gestion de films
+Communique avec TMDB via API
+Fonctionnalités :
+- Rechercher un film
+- Accéder aux détails de ce film
+- Ajouter un film aux favoris
+- Supprimer un film des favoris
 
-This project is a starting point for a Flutter application.
+Les fonctionnalités 3 - 4 - 5 demandent d’être connecté
+  
+## Architecture
 
-A few resources to get you started if this is your first Flutter project:
+### Séparation des vues et des vuesModels
+Intelligence dans le vueModel, de manière similaire à Angular.
+Utilisation de rxdart pour plus de réactivité (et facilité de développement)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Streambuilders
+Consomme les données envoyées par un stream présent dans un viewModel
+Permet d’éviter de devoir mettre à jour un widget manuellement
+On retrouve une logique similaire aux observables de rxjs
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Ce qu'il reste à faire
+
+### Listes
+- Ajouter un film à une liste
+- Supprimer un film d’une liste
+- Créer/Supprimer une liste
+
+### Notation
+- Ajouter/modifier une note à un film
+- Visualiser la moyenne et répartition des notes d’un film
+
+### Commentaires
+- Ajouter/Modifier/Supprimer
+
